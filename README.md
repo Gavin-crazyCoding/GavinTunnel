@@ -1,10 +1,10 @@
-# 通用端口穿透工具 v4.0
+# 通用端口穿透工具 v4.1
 
 <div align="center">
 
-**双引擎驱动 | 全协议支持 | 自动重连 | FTP专属优化**
+**双引擎驱动 | 全协议支持 | 自动重连 | Minecraft/FTP专属优化**
 
-[![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)](https://github.com)
+[![Version](https://img.shields.io/badge/version-4.1.0-blue.svg)](https://github.com)
 [![Python](https://img.shields.io/badge/python-3.6+-green.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
@@ -31,6 +31,7 @@
 
 ### 适用场景
 
+- 🎮 **Minecraft 服务器公网访问** (TCP 协议优化)
 - 远程访问内网 Web 服务、数据库、FTP 服务器
 - 远程桌面连接（RDP/VNC）
 - SSH 远程管理
@@ -41,7 +42,7 @@
 
 ## 核心特性
 
-### v4.0 新增功能
+### v4.1 新增功能
 
 | 功能 | 描述 |
 |------|------|
@@ -123,6 +124,9 @@ python3 tunnel4.py
 ### 一键启动示例
 
 ```bash
+# 🎮 Minecraft 服务器穿透 (v4.1 新增)
+python3 tunnel4.py server 25565 --proto tcp
+
 # SSH 穿透（最常用）
 python3 tunnel4.py server 22 --proto ssh
 
@@ -158,7 +162,7 @@ python3 tunnel4.py
       ██║   ╚██████╔╝██║       ██║   ███████╗██║  ██║██║ ╚═╝ ██║
       ╚═╝    ╚═════╝ ╚═╝       ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝
 
-              通用端口穿透工具 v4.0.0 - 全功能无删减版
+              通用端口穿透工具 v4.1.0 - 全功能无删减版
               双引擎：Cloudflare Tunnel + cpolar | 100%兼容原命令
               作者：Gavin Team
 ======================================================================
@@ -204,6 +208,96 @@ python3 tunnel4.py auto --exclude 22 80
 # 包含系统端口 (1-1023)
 python3 tunnel4.py auto --include-system
 ```
+
+
+---
+
+## 🎮 Minecraft 服务器穿透指南
+
+### 快速开始
+
+1. **启动内网 Minecraft 服务器**
+   ```bash
+   # 确保你的服务器在 25565 端口运行
+   cd /path/to/minecraft
+   java -jar server.jar
+   ```
+
+2. **启动 TCP 穿透隧道**
+   ```bash
+   python3 tunnel4.py server 25565 --proto tcp --force
+   ```
+
+3. **获取公网地址**
+   
+   隧道建立成功后，会显示类似以下信息：
+   ```
+   ============================================================
+     隧道已建立!
+     公网地址：minecraft-server.trycloudflare.com:12345
+     内网地址：127.0.0.1:25565 (TCP)
+     ------------------------------------------------------------
+     Minecraft/TCP 直连地址：minecraft-server.trycloudflare.com:12345
+     (在客户端中输入：minecraft-server.trycloudflare.com:12345)
+   ============================================================
+   ```
+
+4. **连接到服务器**
+   
+   在 Minecraft 客户端中：
+   - 点击 "多人游戏" -> "添加服务器"
+   - 服务器地址输入：`minecraft-server.trycloudflare.com:12345`
+   - 点击完成，然后加入服务器
+
+### v4.1 TCP 协议修复说明
+
+**问题**: 早期版本将 TCP 协议穿透成 `https://xxx.trycloudflare.com` 格式，Minecraft 无法连接。
+
+**修复**: v4.1 版本正确识别并显示 TCP 隧道地址为 `xxx.trycloudflare.com:端口` 格式。
+
+**对比**:
+```
+❌ 旧版本（错误）: https://abc.trycloudflare.com  ← Minecraft 无法连接
+✅ v4.1（正确） : abc.trycloudflare.com:12345    ← 可直接连接
+```
+
+### 其他 TCP 服务示例
+
+同样的方法适用于所有 TCP 协议服务：
+
+```bash
+# SSH 远程管理
+python3 tunnel4.py server 22 --proto tcp
+
+# MySQL 数据库
+python3 tunnel4.py server 3306 --proto tcp
+
+# Redis 缓存
+python3 tunnel4.py server 6379 --proto tcp
+
+# RDP 远程桌面
+python3 tunnel4.py server 3389 --proto tcp
+
+# VNC 远程桌面
+python3 tunnel4.py server 5900 --proto tcp
+```
+
+### 注意事项
+
+1. **Cloudflare Quick Tunnel 限制**
+   - 免费账户的 Quick Tunnel 是临时的，关闭后地址失效
+   - 每次启动会获得不同的公网地址
+   - 如需固定地址，需使用 Cloudflare 命名隧道
+
+2. **端口说明**
+   - Minecraft 默认端口：25565
+   - Cloudflare 分配的公网端口是随机的
+   - 连接时必须使用完整的 `地址：端口` 格式
+
+3. **性能优化**
+   - 建议使用 `--force` 参数跳过端口检测
+   - 断线会自动重连（最多 10 次）
+   - 详细日志保存在 `tunnel_debug.log`
 
 #### FTP专属穿透
 
@@ -297,6 +391,47 @@ python3 tunnel4.py --restore
 ## 常见问题
 
 ### Q1: 隧道建立失败怎么办？
+
+**解决方案：**
+1. 检查目标端口是否有服务运行
+2. 使用 `--force` 参数跳过检测
+3. 尝试切换引擎（Cloudflare/cpolar）
+4. 查看日志文件 `tunnel_debug.log`
+
+### Q1.5: Minecraft 服务器穿透后无法连接？
+
+**可能原因和解决方案：**
+
+1. **地址格式错误**
+   - ✅ 正确：`abc.trycloudflare.com:12345`
+   - ❌ 错误：`https://abc.trycloudflare.com`
+   - Minecraft 需要 `域名：端口` 格式，不需要 `https://` 前缀
+
+2. **端口未开放**
+   - 确保 Minecraft 服务器在 25565 端口运行
+   - 使用 `netstat -tlnp | grep 25565` 检查端口状态
+
+3. **协议选择错误**
+   - 必须使用 `--proto tcp` 参数
+   - 不要使用 `--proto http` 或 `--proto https`
+
+4. **Cloudflare 服务问题**
+   - Quick Tunnel 偶尔会出现 500 错误
+   - 等待几秒后重试即可
+   - 考虑使用 cpolar 作为备用方案
+
+**正确的启动命令：**
+```bash
+python3 tunnel4.py server 25565 --proto tcp --force
+```
+
+**连接信息示例：**
+```
+Minecraft/TCP 直连地址：abc123.trycloudflare.com:54321
+(在客户端中输入：abc123.trycloudflare.com:54321)
+```
+
+
 
 **解决方案：**
 1. 检查目标端口是否有服务运行
@@ -409,7 +544,7 @@ python3 server.py
 
 ## 更新日志
 
-### v4.0.0 (2026-03-28)
+### v4.1.0 (2026-03-28)
 - 全协议 Cloudflare 兼容性修复
 - FTP 被动模式端口范围穿透
 - 全局自动重试 + 断线自动重连
@@ -439,8 +574,8 @@ MIT License
 <div align="center">
 
 **作者**: Gavin Team  
-**版本**: v4.0.0  
-**更新日期**: 2026-03-28
+**版本**: v4.1.0  
+**更新日期**: 2026-03-29
 
 如有问题，请查看日志文件 `tunnel_debug.log`
 
