@@ -1,10 +1,10 @@
-# 通用端口穿透工具 v4.1
+# 通用端口穿透工具 v4.2
 
 <div align="center">
 
 **双引擎驱动 | 全协议支持 | 自动重连 | Minecraft/FTP专属优化**
 
-[![Version](https://img.shields.io/badge/version-4.1.0-blue.svg)](https://github.com)
+[![Version](https://img.shields.io/badge/version-4.2.0-blue.svg)](https://github.com)
 [![Python](https://img.shields.io/badge/python-3.6+-green.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
@@ -15,6 +15,7 @@
 ## 目录
 
 - [简介](#简介)
+- [版本说明](#版本说明)
 - [核心特性](#核心特性)
 - [快速开始](#快速开始)
 - [使用指南](#使用指南)
@@ -27,7 +28,7 @@
 
 ## 简介
 
-`tunnel4.py` 是一款功能强大的端口穿透工具，基于 **Cloudflare Tunnel** 和 **cpolar** 双引擎驱动，可将内网服务安全地暴露到公网。
+`tunnel4.1.py` 和 `tunnel4.2.py` 是功能强大的端口穿透工具，基于 **Cloudflare Tunnel** 和 **cpolar** 双引擎驱动，可将内网服务安全地暴露到公网。
 
 ### 适用场景
 
@@ -37,6 +38,47 @@
 - SSH 远程管理
 - 开发环境公网测试
 - FTP 文件传输（支持被动模式）
+
+---
+
+## 版本说明
+
+### v4.2 vs v4.1 差异对比
+
+| 特性 | v4.1 (tunnel4.1.py) | v4.2 (tunnel4.2.py) |
+|------|---------------------|---------------------|
+| **协议处理** | TCP 协议尝试匹配 `xxx.trycloudflare.com:端口` 格式 | 所有协议统一使用 `https://xxx.trycloudflare.com` 格式 |
+| **适用场景** | 适用于需要直接 IP:端口 连接的场景（如 Minecraft 游戏） | 更符合 Cloudflare Quick Tunnel 的实际输出 |
+| **TCP 连接方式** | 直接使用域名:端口连接 | 需要使用 `cloudflared access tcp` 客户端连接 |
+| **代码逻辑** | 区分 TCP 类协议和其他协议，使用不同的正则表达式 | 统一使用 HTTPS 格式的正则表达式 |
+| **推荐用途** | 游戏服务器、需要直连的 TCP 服务 | 一般 TCP 服务、需要通过客户端连接的场景 |
+
+### 如何选择版本
+
+**选择 v4.1 的情况：**
+- ✅ 需要直接连接 TCP 服务（如 Minecraft 服务器）
+- ✅ 客户端无法使用 `cloudflared access tcp` 命令
+- ✅ 需要 `域名:端口` 格式的直连地址
+
+**选择 v4.2 的情况：**
+- ✅ 需要使用标准的 Cloudflare Quick Tunnel 格式
+- ✅ 客户端可以使用 `cloudflared access tcp` 命令
+- ✅ 需要与 Cloudflare 官方文档保持一致
+- ✅ HTTP/HTTPS 服务为主
+
+### v4.2 新增说明
+
+v4.2 版本针对 Cloudflare Quick Tunnel 的实际行为进行了调整：
+
+1. **统一协议格式**：所有协议（包括 TCP）都使用 `https://xxx.trycloudflare.com` 格式
+2. **标准连接方式**：TCP 协议需要使用 `cloudflared access tcp` 命令连接
+3. **兼容性提升**：更符合 Cloudflare 官方文档和实际输出
+
+### 注意事项
+
+- v4.1 和 v4.2 功能基本相同，主要区别在于协议地址格式和连接方式
+- 如果使用 v4.2 连接 TCP 服务，请确保客户端已安装 cloudflared
+- 对于 Minecraft 等游戏服务器，推荐使用 v4.1 版本以获得更好的兼容性
 
 ---
 
@@ -106,17 +148,21 @@ cloudflared --version
 **Windows 安装：**
 1. 访问上述官网下载 `cloudflared-windows-amd64.exe`
 2. 重命名为 `cloudflared.exe`
-3. 放到系统 PATH 目录或与 `tunnel4.py` 同目录
+3. 放到系统 PATH 目录或与 `tunnel4.1.py` 或 `tunnel4.2.py` 同目录
 
-#### 第二步：运行 tunnel4.py
+#### 第二步：运行 tunnel4.1.py 或 tunnel4.2.py
 
 ```bash
-# 下载 tunnel4.py
-wget https://github.com/your-repo/tunnel4.py -O tunnel4.py
-chmod +x tunnel4.py
+# 下载 tunnel4.1.py 或 tunnel4.2.py
+wget https://github.com/your-repo/tunnel4.1.py -O tunnel4.1.py
+chmod +x tunnel4.1.py
+
+# 或下载 v4.2 版本
+wget https://github.com/your-repo/tunnel4.2.py -O tunnel4.2.py
+chmod +x tunnel4.2.py
 
 # 运行
-python3 tunnel4.py
+python3 tunnel4.1.py  # 或 python3 tunnel4.2.py
 ```
 
 > **注意**：cpolar 引擎可在首次运行时自动下载，但 Cloudflared 建议手动安装以获得最佳兼容性。
@@ -125,19 +171,19 @@ python3 tunnel4.py
 
 ```bash
 # 🎮 Minecraft 服务器穿透 (v4.1 新增)
-python3 tunnel4.py server 25565 --proto tcp
+python3 tunnel4.1.py server 25565 --proto tcp
 
 # SSH 穿透（最常用）
-python3 tunnel4.py server 22 --proto ssh
+python3 tunnel4.1.py server 22 --proto ssh
 
 # Web 服务穿透
-python3 tunnel4.py server 80 --proto http
+python3 tunnel4.1.py server 80 --proto http
 
 # MySQL 数据库穿透
-python3 tunnel4.py server 3306 --proto mysql
+python3 tunnel4.1.py server 3306 --proto mysql
 
 # FTP 穿透（含被动模式）
-python3 tunnel4.py ftp --port 21 --pasv-ports 50000-50010
+python3 tunnel4.1.py ftp --port 21 --pasv-ports 50000-50010
 ```
 
 ---
@@ -149,7 +195,7 @@ python3 tunnel4.py ftp --port 21 --pasv-ports 50000-50010
 直接运行进入交互式界面：
 
 ```bash
-python3 tunnel4.py
+python3 tunnel4.1.py  # 或 python3 tunnel4.2.py
 ```
 
 界面预览：
@@ -162,7 +208,7 @@ python3 tunnel4.py
       ██║   ╚██████╔╝██║       ██║   ███████╗██║  ██║██║ ╚═╝ ██║
       ╚═╝    ╚═════╝ ╚═╝       ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝
 
-              通用端口穿透工具 v4.1.0 - 全功能无删减版
+              通用端口穿透工具 v4.2.0 - 全功能无删减版
               双引擎：Cloudflare Tunnel + cpolar | 100%兼容原命令
               作者：Gavin Team
 ======================================================================
@@ -176,37 +222,57 @@ python3 tunnel4.py
 #### 单端口穿透
 
 ```bash
-# 基本用法
-python3 tunnel4.py server <端口> --proto <协议>
+# 基本用法（使用 v4.1 版本）
+python3 tunnel4.1.py server <端口> --proto <协议>
 
 # SSH 穿透示例
-python3 tunnel4.py server 22 --proto ssh --ip 127.0.0.1
+python3 tunnel4.1.py server 22 --proto ssh --ip 127.0.0.1
 
 # 强制启动（跳过端口检测）
-python3 tunnel4.py server 22 --proto ssh --force
+python3 tunnel4.1.py server 22 --proto ssh --force
 ```
+
+#### v4.2 TCP 协议连接方式
+
+v4.2 版本中，TCP 协议需要使用 `cloudflared access tcp` 客户端连接：
+
+```bash
+# 1. 在服务端启动隧道
+python3 tunnel4.2.py server 25565 --proto tcp
+
+# 2. 在客户端连接（需要安装 cloudflared）
+cloudflared access tcp --url https://xxx.trycloudflare.com
+
+# 或者使用内置的 client 模式
+python3 tunnel4.2.py client xxx.trycloudflare.com --local-port 25565 --proto tcp
+```
+
+**注意**：
+- v4.1 版本可以直接使用 `xxx.trycloudflare.com:端口` 连接
+- v4.2 版本统一使用 HTTPS 格式，需要通过 cloudflared access tcp 转发
+- 对于游戏服务器（如 Minecraft），推荐使用 v4.1 版本以获得更好的兼容性
 
 #### 批量端口穿透
 
 ```bash
 # 同时穿透多个端口
-python3 tunnel4.py batch 22 3306 6379 --proto tcp
+python3 tunnel4.1.py batch 22 3306 6379 --proto tcp
 
 # 带仪表盘
-python3 tunnel4.py batch 22 3306 6379 --proto tcp --dashboard
+python3 tunnel4.1.py batch 22 3306 6379 --proto tcp --dashboard
 ```
 
 #### 自动扫描穿透
 
 ```bash
 # 自动扫描并穿透所有监听端口
-python3 tunnel4.py auto
+python3 tunnel4.1.py auto
 
 # 排除特定端口
-python3 tunnel4.py auto --exclude 22 80
+python3 tunnel4.1.py auto --exclude 22 80
 
 # 包含系统端口 (1-1023)
-python3 tunnel4.py auto --include-system
+python3 tunnel4.1.py auto --include-system
 ```
 
 
@@ -225,7 +291,7 @@ python3 tunnel4.py auto --include-system
 
 2. **启动 TCP 穿透隧道**
    ```bash
-   python3 tunnel4.py server 25565 --proto tcp --force
+   python3 tunnel4.1.py server 25565 --proto tcp --force
    ```
 
 3. **获取公网地址**
@@ -267,19 +333,19 @@ python3 tunnel4.py auto --include-system
 
 ```bash
 # SSH 远程管理
-python3 tunnel4.py server 22 --proto tcp
+python3 tunnel4.1.py server 22 --proto tcp
 
 # MySQL 数据库
-python3 tunnel4.py server 3306 --proto tcp
+python3 tunnel4.1.py server 3306 --proto tcp
 
 # Redis 缓存
-python3 tunnel4.py server 6379 --proto tcp
+python3 tunnel4.1.py server 6379 --proto tcp
 
 # RDP 远程桌面
-python3 tunnel4.py server 3389 --proto tcp
+python3 tunnel4.1.py server 3389 --proto tcp
 
 # VNC 远程桌面
-python3 tunnel4.py server 5900 --proto tcp
+python3 tunnel4.1.py server 5900 --proto tcp
 ```
 
 ### 注意事项
@@ -303,23 +369,26 @@ python3 tunnel4.py server 5900 --proto tcp
 
 ```bash
 # 仅控制通道
-python3 tunnel4.py ftp --port 21 --ip 127.0.0.1
+python3 tunnel4.1.py ftp --port 21 --ip 127.0.0.1
 
 # 含被动模式端口范围
-python3 tunnel4.py ftp --port 21 --pasv-ports 50000-50010
+python3 tunnel4.1.py ftp --port 21 --pasv-ports 50000-50010
 
 # 使用 cpolar 引擎
-python3 tunnel4.py ftp --port 21 --use-cpolar
+python3 tunnel4.1.py ftp --port 21 --use-cpolar
 ```
 
 #### 客户端连接
 
 ```bash
-# 连接到远程隧道
-python3 tunnel4.py client <隧道地址> --local-port <本地端口> --proto tcp
+# 连接到远程隧道（v4.1 版本）
+python3 tunnel4.1.py client <隧道地址> --local-port <本地端口> --proto tcp
 
 # 示例
-python3 tunnel4.py client abc123.trycloudflare.com --local-port 2222 --proto tcp
+python3 tunnel4.1.py client abc123.trycloudflare.com --local-port 2222 --proto tcp
+
+# v4.2 版本 - 使用 cloudflared access tcp
+cloudflared access tcp --url https://abc123.trycloudflare.com
 ```
 
 ---
@@ -380,10 +449,10 @@ python3 tunnel4.py client abc123.trycloudflare.com --local-port 2222 --proto tcp
 
 ```bash
 # 备份当前配置
-python3 tunnel4.py --backup
+python3 tunnel4.1.py --backup
 
 # 恢复配置
-python3 tunnel4.py --restore
+python3 tunnel4.1.py --restore
 ```
 
 ---
@@ -422,7 +491,7 @@ python3 tunnel4.py --restore
 
 **正确的启动命令：**
 ```bash
-python3 tunnel4.py server 25565 --proto tcp --force
+python3 tunnel4.1.py server 25565 --proto tcp --force
 ```
 
 **连接信息示例：**
@@ -444,7 +513,7 @@ Minecraft/TCP 直连地址：abc123.trycloudflare.com:54321
 **解决方案：**
 确保同时穿透了被动模式端口：
 ```bash
-python3 tunnel4.py ftp --port 21 --pasv-ports 50000-50010
+python3 tunnel4.1.py ftp --port 21 --pasv-ports 50000-50010
 ```
 并在 FTP 服务器配置相同的被动端口范围。
 
@@ -455,7 +524,7 @@ python3 tunnel4.py ftp --port 21 --pasv-ports 50000-50010
 - 配合 systemd 创建服务
 - 使用 `nohup`:
   ```bash
-  nohup python3 tunnel4.py server 22 --proto ssh &
+  nohup python3 tunnel4.1.py server 22 --proto ssh &
   ```
 
 ### Q4: UDP 协议如何使用？
@@ -463,7 +532,7 @@ python3 tunnel4.py ftp --port 21 --pasv-ports 50000-50010
 UDP 协议需要桥接为 TCP 传输：
 ```bash
 # DNS 服务穿透
-python3 tunnel4.py server 53 --proto dns
+python3 tunnel4.1.py server 53 --proto dns
 ```
 
 ### Q5: 程序提示找不到 cloudflared 怎么办？
@@ -494,10 +563,10 @@ cloudflared --version  # 应显示版本号
 ### 架构设计
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│  内网服务    │────▶│ tunnel4.py   │────▶│  公网地址   │
-│  (本地端口)  │     │ (协议映射)   │     │ (Cloudflare)│
-└─────────────┘     └──────────────┘     └─────────────┘
+┌─────────────┐     ┌────────────────┐     ┌─────────────┐
+│  内网服务    │────▶│ tunnel4.1/4.2 │────▶│  公网地址   │
+│  (本地端口)  │     │ (协议映射)     │     │ (Cloudflare)│
+└─────────────┘     └────────────────┘     └─────────────┘
 ```
 
 ### 日志系统
@@ -544,8 +613,15 @@ python3 server.py
 
 ## 更新日志
 
+### v4.2.0 (2026-04-04)
+- 统一所有协议使用标准 Cloudflare Quick Tunnel 格式
+- TCP 协议支持通过 `cloudflared access tcp` 客户端连接
+- 优化隧道 URL 匹配逻辑，提高兼容性
+- 更新日志输出格式（中文冒号）
+
 ### v4.1.0 (2026-03-28)
 - 全协议 Cloudflare 兼容性修复
+- TCP 协议支持直接 IP:端口 连接（Minecraft 等）
 - FTP 被动模式端口范围穿透
 - 全局自动重试 + 断线自动重连
 - 增强错误日志系统
@@ -574,8 +650,8 @@ MIT License
 <div align="center">
 
 **作者**: Gavin Team  
-**版本**: v4.1.0  
-**更新日期**: 2026-03-29
+**版本**: v4.2.0  
+**更新日期**: 2026-04-04
 
 如有问题，请查看日志文件 `tunnel_debug.log`
 
